@@ -1,0 +1,76 @@
+# PostgreSQL 自建栈（Docker · PC 常驻 · 局域网共享）
+#
+# 用法：把整个 pg-stack 目录拷到 PC 的 C:\dev\pg-stack，复制 .env.example 为 .env 并改密码，
+#       然后 docker compose up -d --wait
+#
+# 端口规划（与 Gitea 3080 / Jenkins 8080 / loono5 3000-3001 无冲突）：
+#   5432  Postgres 本体        ← Mac 直连这个
+#   8081  pgweb 浏览器管理台
+
+services:
+  postgres:
+    # ⚠️ 固定大版本，不要用 latest —— 大版本一变，数据目录格式就变了，旧卷读不出来
+    image: postgres:18
+    container_name: postgres
+    restart: unless-stopped
+
+    # 显式写 0.0.0.0，确保局域网可达（Docker Desktop 默认已是，写出来更明确）
+    ports:
+      - "0.0.0.0:5432:5432"
+
+    environment:
+      POSTGRES_USER: loono
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?请在 .env 里设置 POSTGRES_PASSWORD}
+      POSTGRES_DB: loono
+      # 注意：以上变量只在数据卷为空时（首次启动）生效，之后改它们没有任何效果
+
+    volumes:
+      # ⚠️⚠️ PostgreSQL 18 起，数据目录带大版本号，卷必须挂在父目录上
+      #     旧教程写的 /var/lib/postgresql/data 在 18 上会让容器直接退出
+      - pgdata:/var/lib/postgresql
+      # 只在首次初始化时执行的 SQL（建扩展等）
+      - ./init:/docker-entrypoint-initdb.d:ro
+
+    command:
+      - postgres
+      - -c
+      - max_connections=200
+      - -c
+      - shared_buffers=1GB
+      - -c
+      - work_mem=16MB
+      - -c
+      - maintenance_work_mem=256MB
+      - -c
+      - effective_cache_size=3GB
+      - -c
+      - shared_preload_libraries=pg_stat_statements
+      - -c
+      - log_min_duration_statement=500   # 慢于 500ms 的语句记进日志，以后排查很有用
+      - -c
+      - timezone=Asia/Shanghai
+
+    shm_size: 256mb
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U loono -d loono"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # 可选的浏览器管理台：http://<PC_IP>:8081
+  # 不想要就删掉这一段，或用 docker compose up -d postgres 只起数据库
+  pgweb:
+    image: sosedoff/pgweb
+    container_name: pgweb
+    restart: unless-stopped
+    ports:
+      - "8081:8081"
+    environment:
+      PGWEB_DATABASE_URL: postgres://loono:${POSTGRES_PASSWORD}@postgres:5432/loono?sslmode=disable
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  pgdata:
