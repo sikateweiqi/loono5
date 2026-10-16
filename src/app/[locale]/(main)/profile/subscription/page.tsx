@@ -4,7 +4,7 @@ import { Screen } from "@/components/layout/screen";
 import { ScreenHeader } from "@/components/layout/screen-header";
 import { PlanPicker } from "@/components/profile/plan-picker";
 import { getCurrentUser } from "@/lib/auth/current-user";
-import { plans } from "@/lib/mock-data";
+import { listPlans } from "@/lib/db/plans";
 import { hasActiveSubscription } from "@/lib/tiers";
 
 export default async function SubscriptionPage({
@@ -18,6 +18,7 @@ export default async function SubscriptionPage({
   const t = await getTranslations("subscription");
 
   const currentUser = await getCurrentUser();
+  const plans = await listPlans();
 
   return (
     <>

@@ -93,9 +93,12 @@ export function clearRefCookie(): void {
  * Built from the live origin rather than a constant, because the consumer site
  * is `loono.com` in production but `localhost:3000` in development and the two
  * must not drift apart. The locale segment is left out on purpose: the
- * middleware resolves it and preserves the query string, so `/auth?ref=X`
- * lands on `/ru/auth?ref=X` for a Russian member.
+ * middleware resolves it and preserves the query string, so `/auth/register?ref=X`
+ * lands on `/ru/auth/register?ref=X` for a Russian member.
+ *
+ * 指向注册页而不是登录页：邀请链接的唯一用途就是拉新，
+ * 落到登录页会让被邀请的人先去读一句"欢迎回来"。
  */
 export function buildReferralUrl(origin: string, refCode: string): string {
-  return `${origin.replace(/\/$/, "")}/auth?ref=${encodeURIComponent(refCode)}`;
+  return `${origin.replace(/\/$/, "")}/auth/register?ref=${encodeURIComponent(refCode)}`;
 }

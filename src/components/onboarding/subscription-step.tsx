@@ -7,15 +7,17 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import { plans } from "@/lib/mock-data";
 import { formatPrice, isContactSales, planLabelKey } from "@/lib/plans";
-import type { UserLevel } from "@/types/user";
+import type { Plan, UserLevel } from "@/types/user";
 
 /**
  * Step 3: pick a plan and optionally redeem a 30-day Level 1 trial code.
  * Level selection is local state until checkout is wired up.
+ *
+ * 档位是「数据」不是「状态」，所以由服务端页面查库后作为 props 传入 ——
+ * 这样这个组件可以保持纯客户端交互，不必为了读库把自己变成异步组件。
  */
-export function OnboardingSubscription() {
+export function OnboardingSubscription({ plans }: { plans: Plan[] }) {
   const t = useTranslations("onboarding.subscription");
   const tf = useTranslations("onboarding.subscription.features");
   const ts = useTranslations("subscription");

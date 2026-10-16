@@ -4,7 +4,7 @@ import { Screen } from "@/components/layout/screen";
 import { OnboardingPartner } from "@/components/onboarding/partner-step";
 import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
-import { emptyPreferences } from "@/lib/mock-data";
+import { emptyPreferences } from "@/lib/profile-defaults";
 import type { UserLevel } from "@/types/user";
 
 /**

@@ -1,4 +1,10 @@
-import { Handshake, Heart, Languages, ShieldCheck, Sparkles } from "lucide-react";
+import {
+  Handshake,
+  Heart,
+  Languages,
+  ShieldCheck,
+  Sparkles,
+} from "lucide-react";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
 import { GhostCta, PrimaryCta } from "@/components/landing/cta";
@@ -103,7 +109,7 @@ export default async function LandingPage({
                   <StatsRow stats={stats} className="mb-5" />
 
                   <div className="flex flex-col gap-2.5">
-                    <PrimaryCta href="/auth" />
+                    <PrimaryCta href="/auth/register" />
                     <GhostCta href="/catalog">{t("ctaSecondary")}</GhostCta>
                   </div>
 

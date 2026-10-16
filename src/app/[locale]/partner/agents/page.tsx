@@ -10,7 +10,7 @@ import { OperatorBar } from "@/components/partner/operator-bar";
 import { Panel } from "@/components/partner/panel";
 import { RevenueChart } from "@/components/partner/revenue-chart";
 import { Link } from "@/i18n/navigation";
-import { findPartner, partnerProfiles } from "@/lib/partner/mock-agents";
+import { findPartner, listPartners } from "@/lib/db/partner";
 import {
   arpu,
   bucketUnitFor,
@@ -127,10 +127,11 @@ export default async function PartnerAgentsPage({
   });
 
   const selectedId = first(query.agent) ?? "";
-  const partner = selectedId ? findPartner(selectedId) : undefined;
-  const roster = buildRoster(range);
+  const partner = selectedId ? await findPartner(selectedId) : null;
+  const roster = await buildRoster(range);
+  const partners = await listPartners();
 
-  const options: PartnerOption[] = partnerProfiles.map((profile) => ({
+  const options: PartnerOption[] = partners.map((profile) => ({
     id: profile.id,
     label: profile.name,
     region: profile.region,
@@ -157,9 +158,11 @@ export default async function PartnerAgentsPage({
     return `/partner/agents?${next.toString()}`;
   };
 
-  const summary = partner ? summarizePartner(partner.id, range) : null;
-  const trend = partner ? partnerTrend(partner.id, range) : [];
-  const activities = partner ? partnerActivitiesInRange(partner.id, range) : [];
+  const summary = partner ? await summarizePartner(partner.id, range) : null;
+  const trend = partner ? await partnerTrend(partner.id, range) : [];
+  const activities = partner
+    ? await partnerActivitiesInRange(partner.id, range)
+    : [];
   const unit = bucketUnitFor(range);
   const unitLabel =
     unit === "day"

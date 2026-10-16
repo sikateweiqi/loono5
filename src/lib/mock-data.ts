@@ -1,3 +1,4 @@
+// 说明：`weightKg` 是为 0007 迁移新增的字段，这里统一补 null。
 import type { Plan } from "@/types/user";
 import type { Agent, PromoCode, Payout, Referral } from "@/types/agent";
 import type { ChatThread, Message } from "@/types/chat";
@@ -86,6 +87,7 @@ export const plans: Plan[] = [
  */
 export const emptyProfile: PersonalProfile = {
   heightCm: null,
+  weightKg: null,
   education: null,
   languages: [],
   religion: null,
@@ -96,6 +98,11 @@ export const emptyProfile: PersonalProfile = {
   children: null,
   maritalStatus: null,
   occupation: "",
+  // 兴趣与自我介绍于 2026-10-16 从 ProfileBasics 挪进 PersonalProfile。
+  // 这个文件已零引用（真正的空形状在 lib/profile-defaults.ts），
+  // 补齐只是为了让废弃模块继续通过类型检查。
+  interests: [],
+  bio: "",
   countryCode: "",
   city: "",
 };
@@ -152,6 +159,7 @@ export const currentUser: PublicUser = {
   }),
   profile: profileOf({
     heightCm: 182,
+    weightKg: null,
     education: "master",
     languages: ["zh", "en", "ru"],
     religion: "none",
@@ -213,6 +221,7 @@ export const catalogUsers: PublicUser[] = [
     }),
     profile: profileOf({
       heightCm: 166,
+      weightKg: null,
       education: "bachelor",
       languages: ["zh", "en"],
       religion: "none",
@@ -260,6 +269,7 @@ export const catalogUsers: PublicUser[] = [
     }),
     profile: profileOf({
       heightCm: 172,
+      weightKg: null,
       education: "master",
       languages: ["ru", "en", "fr"],
       religion: "christian",
@@ -309,6 +319,7 @@ export const catalogUsers: PublicUser[] = [
     }),
     profile: profileOf({
       heightCm: 161,
+      weightKg: null,
       education: "bachelor",
       languages: ["ja", "en"],
       religion: "buddhist",
@@ -349,6 +360,7 @@ export const catalogUsers: PublicUser[] = [
     lastActiveAt: "2026-09-28T09:00:00.000Z",
     profile: profileOf({
       heightCm: 168,
+      weightKg: null,
       education: "college",
       languages: ["zh"],
       countryCode: "CN",
@@ -388,6 +400,7 @@ export const catalogUsers: PublicUser[] = [
     }),
     profile: profileOf({
       heightCm: 170,
+      weightKg: null,
       education: "master",
       languages: ["en", "zh", "fr"],
       religion: "catholic",
@@ -433,6 +446,7 @@ export const catalogUsers: PublicUser[] = [
     }),
     profile: profileOf({
       heightCm: 165,
+      weightKg: null,
       education: "bachelor",
       languages: ["ru", "en"],
       religion: "christian",

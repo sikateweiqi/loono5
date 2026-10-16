@@ -212,14 +212,24 @@
         "Verification",
         "Partners"
       ],
-      "about": ["About us", "Our team", "Careers", "Press"],
+      "about": [
+        "About us",
+        "Our team",
+        "Careers",
+        "Press"
+      ],
       "legal": [
         "Terms of use",
         "Privacy policy",
         "Deletion policy",
         "Minor protection"
       ],
-      "support": ["Help centre", "FAQ", "Contact us", "Feedback"],
+      "support": [
+        "Help centre",
+        "FAQ",
+        "Contact us",
+        "Feedback"
+      ],
       "disclaimer": "This page is a product demo. All member profiles, prices and statistics are sample data and do not represent real users.",
       "rights": "© 2026 LOONO. All rights reserved.",
       "company": "LOONO International · demo site",
@@ -227,25 +237,79 @@
     }
   },
   "auth": {
-    "title": "Welcome back",
-    "subtitle": "Log in to keep browsing and chatting",
-    "phonePlaceholder": "Phone number",
-    "smsPlaceholder": "Verification code",
-    "sendCode": "Send code",
-    "submit": "Log in",
-    "mock": {
-      "hintTitle": "Local test mode",
-      "hintBody": "Any phone number works. Fixed test SMS code: 1234",
-      "autofill": "Autofill",
-      "signingIn": "Signing in…"
+    "register": {
+      "title": "Create your account",
+      "subtitle": "Verify a phone number or email, then set a password",
+      "submit": "Sign up and continue",
+      "submitting": "Creating account…"
     },
-    "agree": "I have read and agree to the Terms and Privacy Policy",
+    "signin": {
+      "title": "Welcome back",
+      "subtitle": "Verify a phone number or email, then set a password",
+      "submit": "Log in",
+      "submitting": "Signing in…"
+    },
+    "channelLabel": "Verification method",
+    "channel": {
+      "sms": "Phone",
+      "email": "Email"
+    },
+    "identifierLabel": {
+      "sms": "Phone number",
+      "email": "Email address"
+    },
+    "codeLabel": "Verification code",
+    "codePlaceholder": "6 digits",
+    "sendCode": "Send code",
+    "resendIn": "Resend in {seconds}s",
+    "sentTo": "Code sent to {target}",
+    "terms": "I have read and agree to the Terms and Privacy Policy",
     "divider": "Or continue with",
-    "hasAccount": "Already have an account?",
-    "hasAccountAction": "Log in",
+    "hasAccount": "Already have an account? Log in",
+    "noAccount": "No account yet? Sign up free",
+    "dev": {
+      "hintTitle": "Local test mode",
+      "hintBody": "No SMS or email gateway on this machine, so the code shows up here: {code}",
+      "autofill": "Autofill"
+    },
     "errors": {
-      "phoneRequired": "Enter a valid phone number",
-      "invalidCode": "Wrong code, use 1234"
+      "invalidIdentifier": "Enter a valid phone number or email address",
+      "identifierTaken": "That phone number or email is already registered — log in instead",
+      "notRegistered": "No account uses that identifier yet — sign up first",
+      "termsRequired": "Please accept the Terms and Privacy Policy to continue",
+      "invalidCode": "Wrong or expired code — request a new one",
+      "cooldown": "Too many requests — try again in a moment",
+      "unknown": "Something went wrong — please try again",
+      "passwordRequired": "Please enter your password",
+      "passwordTooShort": "Passwords must be at least 8 characters",
+      "passwordTooLong": "Passwords cannot exceed 128 characters",
+      "passwordTooSimple": "Include both letters and digits",
+      "passwordSameAsIdentifier": "The password cannot be your phone number or email",
+      "passwordMismatch": "The two passwords do not match",
+      "passwordWrong": "Wrong password, please try again",
+      "passwordNotSet": "This account has no password yet — sign in with a code instead"
+    },
+    "method": {
+      "label": "Sign-in method",
+      "code": "One-time code",
+      "password": "Password"
+    },
+    "password": {
+      "label": "Password",
+      "labelNew": "Create a password",
+      "confirmLabel": "Confirm password",
+      "placeholder": "8+ characters, letters and digits",
+      "confirmPlaceholder": "Type it again",
+      "show": "Show password",
+      "hide": "Hide password",
+      "hint": "At least {min} characters, with both letters and digits",
+      "strengthLabel": "Strength: ",
+      "strength": {
+        "0": "Weak",
+        "1": "Fair",
+        "2": "Good",
+        "3": "Strong"
+      }
     }
   },
   "onboarding": {
@@ -260,25 +324,55 @@
     "profile": {
       "title": "Complete your profile",
       "subtitle": "Real details make better matches",
-      "nameLabel": "Nickname",
+      "nameLabel": "Real name",
+      "nameHint": "Must match your ID — shown publicly",
       "genderLabel": "Gender",
       "genderMale": "Male",
       "genderFemale": "Female",
-      "ageLabel": "Age",
-      "cityLabel": "City",
-      "bioLabel": "About me",
-      "bioPlaceholder": "Tell people about your interests…",
-      "interestsLabel": "Interests",
       "photosLabel": "Photos",
-      "photosHint": "Upload at least 1 clear face photo",
+      "photosHint": "{count}/{max} uploaded — the first one becomes your avatar",
       "upload": "Upload photo",
-      "submit": "Save and continue"
+      "submit": "Save and continue",
+      "birthDateLabel": "Date of birth",
+      "primaryPhoto": "Avatar",
+      "removePhoto": "Remove this photo",
+      "uploading": "Uploading",
+      "submitting": "Saving…",
+      "errors": {
+        "unauthorized": "Your session has expired — please sign in again",
+        "empty": "Please enter your real name",
+        "tooShort": "Names must be at least 2 characters",
+        "tooLong": "Names are limited to 40 characters",
+        "hasDigit": "Names cannot contain digits",
+        "hasSymbol": "That name contains characters we cannot accept",
+        "noLetter": "That name must contain letters",
+        "tooManyWords": "Names are limited to 4 words",
+        "birthDateRequired": "Please scroll to pick your date of birth",
+        "birthDateInvalid": "That is not a valid date",
+        "birthDateRange": "You must be between 18 and 80 years old",
+        "countryRequired": "Please choose your country of residence",
+        "cityRequired": "Please choose a city from the list",
+        "photosRequired": "Please upload at least one photo",
+        "photoInvalid": "That photo address is not valid — please upload again",
+        "uploadFailed": "Upload failed — check your connection and try again",
+        "uploadTooLarge": "Photos must be under 5MB",
+        "uploadType": "Only JPG / PNG / WebP / AVIF are supported",
+        "uploadEmpty": "That file is empty — please choose another",
+        "unknown": "Could not save — please try again later"
+      }
     },
     "attributes": {
       "title": "Your attributes",
       "subtitle": "These attributes power matching and introductions — the more you add, the better the fits",
-      "continue": "Save and continue",
-      "hint": "Sensitive details such as height and assets stay private and are only used for matching"
+      "submit": "Save and continue",
+      "submitting": "Saving…",
+      "hint": "Sensitive details such as height and assets stay private and are only used for matching",
+      "errors": {
+        "unauthorized": "Your session has expired — please sign in again",
+        "interestsTooMany": "You can pick at most 12 interests",
+        "bioTooLong": "About me is limited to 500 characters",
+        "unknown": "Could not save — please try again later"
+      }
     },
     "partner": {
       "title": "Partner preferences",
@@ -449,13 +543,13 @@
     },
     "sections": {
       "basic": "Basic details",
+      "interests": "Interests & about",
       "lifestyle": "Lifestyle & faith",
       "assets": "Assets & residence"
     },
     "height": {
       "label": "Height",
       "unit": "cm",
-      "placeholder": "e.g. 175",
       "value": "{cm} cm"
     },
     "education": {
@@ -548,14 +642,37 @@
       "SG": "Singapore",
       "AU": "Australia",
       "CA": "Canada",
-      "AE": "United Arab Emirates"
+      "AE": "United Arab Emirates",
+      "placeholder": "Choose a country",
+      "KZ": "Kazakhstan",
+      "SE": "Sweden",
+      "MX": "Mexico"
     },
     "city": {
       "label": "City",
-      "placeholder": "e.g. Shanghai"
+      "placeholder": "Choose a city",
+      "pickCountryFirst": "Choose a country first",
+      "hint": "The city list depends on the country"
     },
     "residence": {
       "label": "Residence"
+    },
+    "weight": {
+      "label": "Weight",
+      "unit": "kg",
+      "value": "{kg} kg"
+    },
+    "slider": {
+      "notSet": "Not set",
+      "clear": "Clear"
+    },
+    "interests": {
+      "label": "Interests",
+      "hint": "pick any"
+    },
+    "bio": {
+      "label": "About me",
+      "placeholder": "Tell people about your interests…"
     }
   },
   "partnerPref": {
@@ -580,7 +697,8 @@
       "from": "Min",
       "to": "Max",
       "unitAge": "yrs",
-      "unitHeight": "cm"
+      "unitHeight": "cm",
+      "any": "Any"
     },
     "age": {
       "label": "Partner age range"
@@ -1087,6 +1205,10 @@
         "body": "Choose a row below, or set a partner and period in the filters above."
       }
     },
+    "empty": {
+      "title": "No partner account",
+      "body": "The signed-in member is not enrolled in the partnership programme, so there are no partner figures to show."
+    },
     "revenue": "Revenue analytics",
     "revenueHint": "Commission income, last 6 months",
     "totalRevenue": "Total revenue",
@@ -1126,5 +1248,12 @@
       "other": "Something else"
     },
     "someone": "this person"
+  },
+  "datePicker": {
+    "year": "Year",
+    "month": "Month",
+    "day": "Day",
+    "hint": "Scroll to pick your date of birth",
+    "selected": "Selected: {value}"
   }
 }

@@ -6,7 +6,8 @@ import { OperatorBar } from "@/components/partner/operator-bar";
 import { Panel } from "@/components/partner/panel";
 import { RevenueChart } from "@/components/partner/revenue-chart";
 import { agentLabelKey, commissionRate } from "@/lib/agent";
-import { currentAgent, payouts, referrals } from "@/lib/mock-data";
+import { getAgentDashboard } from "@/lib/db/agent";
+import { getViewerProfile } from "@/lib/db/viewer";
 import { requirePartnerSession } from "@/lib/partner/session";
 import { cn } from "@/lib/utils";
 
@@ -49,8 +50,34 @@ export default async function PartnerPage({
   const ta = await getTranslations("agent");
   const tp = await getTranslations("agent.payout");
 
-  const { stats } = currentAgent;
-  const rate = Math.round(commissionRate(currentAgent.level) * 100);
+  // 当前会员：未登录时 getViewerProfile 会回落到种子账号 u_current（只读展示身份）。
+  const viewer = await getViewerProfile();
+  const dashboard = viewer ? await getAgentDashboard(viewer.id) : null;
+
+  if (!dashboard || !dashboard.agent) {
+    // 当前会员没有 agents 行（不是合作方）：不抛错，保留外套与视觉，
+    // 只把数字区换成明确的空状态 —— 伪造一份零值看板等于谎称对方是合作方。
+    return (
+      <div className="partner-surface relative flex min-h-full flex-1 flex-col">
+        <OperatorBar account={session.account} section="dashboard" />
+
+        <div className="relative z-10 mx-auto w-full max-w-[76rem] px-4 py-5 pb-14 md:px-6 xl:px-8">
+          <div className="partner-panel mt-3 p-5 text-center">
+            <p className="text-sm font-medium text-foreground/85">
+              {t("empty.title")}
+            </p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {t("empty.body")}
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const { agent, payouts, referrals } = dashboard;
+  const { stats } = agent;
+  const rate = Math.round(commissionRate(agent.level) * 100);
 
   const kpis = [
     { icon: TrendingUp, label: t("totalRevenue"), value: stats.totalEarnings },
@@ -64,7 +91,7 @@ export default async function PartnerPage({
       <OperatorBar
         account={session.account}
         section="dashboard"
-        badge={`${ta(agentLabelKey(currentAgent.level))} · ${rate}%`}
+        badge={`${ta(agentLabelKey(agent.level))} · ${rate}%`}
       />
 
       <div className="relative z-10 mx-auto w-full max-w-[76rem] px-4 py-5 pb-14 md:px-6 xl:px-8">
@@ -116,12 +143,9 @@ export default async function PartnerPage({
 
           <Panel
             title={t("quickActions")}
-            hint={`${t("since")} ${new Date(currentAgent.joinedAt).toLocaleDateString(locale)}`}
+            hint={`${t("since")} ${new Date(agent.joinedAt).toLocaleDateString(locale)}`}
           >
-            <PromoTools
-              refLink={currentAgent.refLink}
-              refCode={currentAgent.refCode}
-            />
+            <PromoTools refLink={agent.refLink} refCode={agent.refCode} />
           </Panel>
         </div>
 

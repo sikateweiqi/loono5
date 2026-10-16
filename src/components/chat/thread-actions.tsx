@@ -32,11 +32,8 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
 import { useModeration } from "@/components/chat/moderation-provider";
 import { useThreadContext } from "@/components/chat/thread-moderation";
-import {
-  REPORT_REASONS,
-  type ReportReason,
-} from "@/lib/supabase/database.types";
-import { hideChatForUser, reportUser } from "@/lib/supabase/moderation";
+import { hideChatForUser, reportUser } from "@/lib/chat-client";
+import { REPORT_REASONS, type ReportReason } from "@/lib/db/types";
 
 /**
  * The `...` menu on a conversation: remove it, block the person, report them.

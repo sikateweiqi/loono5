@@ -13,7 +13,7 @@ import {
   markThreadRead,
   sendMessage,
   subscribeToMessages,
-} from "@/lib/supabase/chat";
+} from "@/lib/chat-client";
 import {
   CHATS_HREF,
   useUnreadActions,
@@ -26,13 +26,13 @@ import { randomId } from "@/lib/utils";
 type LoadState = "loading" | "ready" | "error";
 
 /**
- * One conversation, backed by Supabase.
+ * One conversation, backed by the database through the API.
  *
  * This is the first screen in the app that owns its data instead of reading a
- * module-level mock: it loads the history, subscribes to new rows and writes
- * new ones. Sending is optimistic — the bubble appears immediately and is
- * swapped for the persisted row on success — so the thread never lags behind
- * the composer.
+ * module-level mock: it loads the history, follows new rows and writes new
+ * ones. Sending is optimistic — the bubble appears immediately and is swapped
+ * for the persisted row on success — so the thread never lags behind the
+ * composer.
  *
  * The conversation itself is resolved by `ThreadModeration`, which owns the
  * row for the whole screen. Reading it from there rather than resolving again
@@ -101,15 +101,15 @@ export function MessageThread() {
     }
   }, [messages, chatId, state, viewerId]);
 
-  // Live updates. Realtime is an enhancement, not a requirement: if the table
-  // is not in the publication the subscription simply never fires and the
-  // thread still works for the person typing in it.
+  // Live updates. Polling is an enhancement, not a requirement: if a round
+  // trip fails the subscription simply stays quiet and the thread still works
+  // for the person typing in it. See `subscribeToMessages` for the interval.
   useEffect(() => {
     if (!chatId) return;
 
     return subscribeToMessages(chatId, (incoming) => {
       setMessages((previous) =>
-        // Our own insert arrives back through the channel; keep one copy.
+        // The poll replays the history on its first tick; keep one copy.
         previous.some((message) => message.id === incoming.id)
           ? previous
           : [...previous, incoming],
@@ -142,7 +142,6 @@ export function MessageThread() {
       try {
         const saved = await sendMessage({
           chatId,
-          senderId: viewerId,
           body: text,
           locale: localeRef.current,
         });

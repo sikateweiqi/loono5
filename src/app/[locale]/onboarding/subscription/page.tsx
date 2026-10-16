@@ -4,6 +4,7 @@ import { Screen } from "@/components/layout/screen";
 import { OnboardingSubscription } from "@/components/onboarding/subscription-step";
 import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
+import { listPlans } from "@/lib/db/plans";
 
 export default async function OnboardingSubscriptionPage({
   params,
@@ -14,6 +15,7 @@ export default async function OnboardingSubscriptionPage({
   setRequestLocale(locale);
 
   const t = await getTranslations("onboarding.subscription");
+  const plans = await listPlans();
 
   return (
     <Screen
@@ -28,7 +30,7 @@ export default async function OnboardingSubscriptionPage({
         </Button>
       }
     >
-      <OnboardingSubscription />
+      <OnboardingSubscription plans={plans} />
     </Screen>
   );
 }

@@ -6,33 +6,22 @@ import { useCallback, useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { ensureViewerProfile } from "@/lib/chat-client";
 import { buildReferralUrl } from "@/lib/referral";
-import { ensureViewerProfile } from "@/lib/supabase/profile";
 import { cn } from "@/lib/utils";
 
 /**
  * The member's own invite link.
  *
- * Reads `ref_code` off the Supabase profile rather than the mock session, so
- * the code shown is the one the database will actually resolve on the other
- * end. It is created on demand by the 0002 trigger, which is why this is a
- * client component: the row does not exist until the browser has a session.
+ * Reads `ref_code` off the member's own profile row (through GET /api/profile)
+ * rather than the mock session, so the code shown is the one the database will
+ * actually resolve on the other end.
  *
  * Renders nothing at all while loading. A card that pops in later is far less
  * disruptive than a placeholder the member cannot act on, and the profile
  * screen is dense enough without another skeleton.
  */
-export function ReferralLink({
-  displayName,
-  avatarUrl,
-  level,
-  className,
-}: {
-  displayName: string;
-  avatarUrl: string | null;
-  level: number;
-  className?: string;
-}) {
+export function ReferralLink({ className }: { className?: string }) {
   const t = useTranslations("profile.referral");
 
   const [refCode, setRefCode] = useState<string | null>(null);
@@ -42,24 +31,24 @@ export function ReferralLink({
   useEffect(() => {
     let active = true;
 
-    ensureViewerProfile({ displayName, avatarUrl, level })
+    ensureViewerProfile()
       .then((profile) => {
-        if (!active || !profile.ref_code) return;
+        if (!active || !profile.refCode) return;
 
-        setRefCode(profile.ref_code);
+        setRefCode(profile.refCode);
         // Built from the live origin: loono.com in production,
         // localhost:3000 in development, and the two must not drift.
-        setLink(buildReferralUrl(window.location.origin, profile.ref_code));
+        setLink(buildReferralUrl(window.location.origin, profile.refCode));
       })
       .catch(() => {
         // Not attributable to a broken profile card — the rest of the screen
-        // is mock-driven and works regardless.
+        // keeps working regardless.
       });
 
     return () => {
       active = false;
     };
-  }, [displayName, avatarUrl, level]);
+  }, []);
 
   const copy = useCallback(async (value: string, kind: "link" | "code") => {
     try {

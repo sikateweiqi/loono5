@@ -60,14 +60,14 @@ export async function DesktopHeader() {
           <LocaleSwitcher />
 
           <Link
-            href="/auth"
+            href="/auth/login"
             className="hidden rounded-full px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground xl:block"
           >
             {t("login")}
           </Link>
 
           <Link
-            href="/auth"
+            href="/auth/register"
             className="loono-cta flex h-10 items-center justify-center rounded-full px-5 text-sm font-semibold"
           >
             {t("join")}

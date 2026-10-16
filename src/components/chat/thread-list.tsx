@@ -2,27 +2,27 @@
 
 import { Crown } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { VerificationBadges } from "@/components/profile/verification-badges";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Link, usePathname } from "@/i18n/navigation";
 import {
-  ensureChatThread,
+  ensureViewerProfile,
+  getMember,
   listChats,
   subscribeToChats,
-} from "@/lib/supabase/chat";
-import type { ChatRow } from "@/lib/supabase/database.types";
-import { ensureViewerProfile } from "@/lib/supabase/profile";
-import { chatThreads, currentUser, findUser } from "@/lib/mock-data";
+} from "@/lib/chat-client";
+import type { ChatRow } from "@/lib/db/types";
 import { cn } from "@/lib/utils";
+import type { VerificationTag } from "@/types/verification";
 import {
   CHATS_HREF,
   useUnreadActions,
 } from "@/components/chat/unread-provider";
 
 /**
- * The conversation list, read from Supabase.
+ * The conversation list, read from the database through the API.
  *
  * Rendered in two placements:
  *
@@ -31,10 +31,10 @@ import {
  *
  * Every value on screen — preview text, timestamp, unread badge — is a column
  * that database triggers maintain on each message write. The list therefore
- * never patches its own copy: it refetches whenever a `chats` row changes, so
- * what it shows is always what the database says. That is what makes the badge
- * clear when a thread is opened and the preview follow a sent message, rather
- * than those being two things that have to be remembered separately.
+ * never patches its own copy: it refetches whenever the poll fires, so what it
+ * shows is always what the database says. That is what makes the badge clear
+ * when a thread is opened and the preview follow a sent message, rather than
+ * those being two things that have to be remembered separately.
  */
 export function ThreadList({ className }: { className?: string }) {
   const t = useTranslations("chats");
@@ -43,42 +43,41 @@ export function ThreadList({ className }: { className?: string }) {
   const { setUnread } = useUnreadActions();
 
   const [chats, setChats] = useState<ChatRow[]>([]);
+  // Verification badges live on the member, not on the chat row, so they are
+  // fetched per peer and cached. The list is polled, but a peer that has been
+  // looked up once is never asked for again.
+  const [badges, setBadges] = useState<Record<string, VerificationTag[]>>({});
   const [viewerId, setViewerId] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
 
-  const refresh = useCallback(
-    async (profileId: string) => {
-      const rows = await listChats(profileId);
+  // No viewer argument any more: the server scopes the query to the session
+  // cookie, so there is no id here for the browser to get wrong.
+  const refresh = useCallback(async () => {
+    const rows = await listChats();
 
-      setChats(rows);
-      setUnread(
-        CHATS_HREF,
-        Object.fromEntries(
-          rows.map((row) => [row.id, row.unread_count] as const),
-        ),
-      );
-    },
-    [setUnread],
-  );
+    setChats(rows);
+    setUnread(
+      CHATS_HREF,
+      Object.fromEntries(
+        rows.map((row) => [row.id, row.unread_count] as const),
+      ),
+    );
+  }, [setUnread]);
 
   useEffect(() => {
     let active = true;
 
     async function bootstrap() {
       try {
-        // Resolving the viewer first also creates the profile row, which is
-        // what `chats.owner_id` points at.
-        const profile = await ensureViewerProfile({
-          displayName: currentUser.name,
-          avatarUrl: currentUser.avatarUrl,
-          level: currentUser.subscription.level ?? currentUser.level,
-        });
+        // Resolving the viewer first keeps the list from rendering against an
+        // unknown identity, and is what the server uses to scope the query.
+        const profile = await ensureViewerProfile();
 
         if (!active) return;
         setViewerId(profile.id);
-        await refresh(profile.id);
+        await refresh();
       } catch {
-        // A list that cannot reach the database shows its empty state rather
+        // A list that cannot reach the server shows its empty state rather
         // than an error: there is nothing useful for a member to do about it
         // here, and the thread screen surfaces real failures properly.
       } finally {
@@ -93,48 +92,48 @@ export function ThreadList({ className }: { className?: string }) {
     };
   }, [refresh]);
 
-  // Live updates: a sent message and a cleared badge both arrive as a change
-  // to the `chats` row, so one subscription drives the whole list.
+  // Live updates: a sent message and a cleared badge both change the `chats`
+  // row, so one subscription drives the whole list. This is polling rather
+  // than Supabase Realtime now — see `subscribeToChats` for the latency and
+  // request-volume trade that implies.
   useEffect(() => {
     if (!viewerId) return;
 
-    return subscribeToChats(() => void refresh(viewerId));
+    return subscribeToChats(() => refresh());
   }, [viewerId, refresh]);
 
-  // Threads are created when a member opens them, so on a first visit nothing
-  // exists yet. Seed the rows from the catalogue of conversations once per
-  // viewer: each call is an upsert, so re-running is free and any history
-  // already there is left untouched. Guarded by a ref rather than by
-  // `chats.length` so a partial failure still retries the missing rows.
-  const seeded = useRef(false);
-
+  // Badges for any peer that has not been looked up yet. Requests are skipped
+  // once cached, so this settles after the first render of each conversation.
   useEffect(() => {
-    if (!viewerId || seeded.current) return;
+    const missing = chats
+      .map((chat) => chat.peer_id)
+      .filter((id): id is string => typeof id === "string" && !(id in badges));
 
-    seeded.current = true;
+    if (missing.length === 0) return;
 
-    void (async () => {
-      try {
-        for (const thread of chatThreads) {
-          await ensureChatThread({
-            slug: thread.id,
-            viewerProfileId: viewerId,
-            peer: {
-              id: thread.peer.id,
-              name: thread.peer.name,
-              avatarUrl: thread.peer.avatarUrl,
-              level: thread.peer.level,
-              isOnline: thread.peer.isOnline,
-            },
-          });
+    let active = true;
+
+    void Promise.all(
+      missing.map(
+        async (id) => [id, (await getMember(id))?.verifications ?? []] as const,
+      ),
+    )
+      .then((entries) => {
+        if (active) {
+          setBadges((previous) => ({
+            ...previous,
+            ...Object.fromEntries(entries),
+          }));
         }
+      })
+      .catch(() => {
+        // Missing badges only lose a few small icons; the list itself works.
+      });
 
-        await refresh(viewerId);
-      } catch {
-        // Leave the empty state in place; a member cannot act on this here.
-      }
-    })();
-  }, [viewerId, refresh]);
+    return () => {
+      active = false;
+    };
+  }, [chats, badges]);
 
   if (loaded && chats.length === 0) {
     return (
@@ -150,15 +149,6 @@ export function ThreadList({ className }: { className?: string }) {
       {chats.map((chat) => {
         const href = `/chats/${chat.slug}`;
         const active = pathname === href;
-
-        // Verification badges are demo directory data with no home in the
-        // database yet, so they are still looked up from the catalogue by the
-        // thread slug. Everything the bug reports involved is the Supabase
-        // row above.
-        const mockPeer = chatThreads.find(
-          (thread) => thread.id === chat.slug,
-        )?.peer;
-        const peer = mockPeer ? findUser(mockPeer.id) : undefined;
 
         return (
           <li key={chat.id}>
@@ -191,7 +181,7 @@ export function ThreadList({ className }: { className?: string }) {
                     <Crown className="size-2.5 shrink-0 text-muted-foreground" />
                   ) : null}
                   <VerificationBadges
-                    tags={peer?.verifications}
+                    tags={chat.peer_id ? badges[chat.peer_id] : undefined}
                     size="xs"
                     max={3}
                   />

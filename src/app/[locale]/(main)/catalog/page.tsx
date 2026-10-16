@@ -7,7 +7,7 @@ import { ScreenHeader } from "@/components/layout/screen-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { getCurrentUser } from "@/lib/auth/current-user";
-import { catalogUsers } from "@/lib/mock-data";
+import { listCatalogMembers } from "@/lib/db/members";
 import { hasActiveSubscription, visibleLevels } from "@/lib/tiers";
 
 const TABS = ["tabsAll", "tabsNearby", "tabsNew", "tabsOnline"] as const;
@@ -28,6 +28,10 @@ export default async function CatalogPage({
   const subscribed = hasActiveSubscription(viewer);
   const viewerLevel = viewer.subscription.level ?? 1;
   const visible = new Set(visibleLevels(viewerLevel));
+
+  // 目录来自 profiles 表，查询层面已按 kind = 'member' 过滤，
+  // 所以机构型账号（代理商）永远进不了 B2C 目录。
+  const members = await listCatalogMembers();
 
   return (
     <>
@@ -58,7 +62,7 @@ export default async function CatalogPage({
 
       {subscribed ? (
         <div className="px-4 pb-2 text-xs text-muted-foreground md:px-6 xl:px-8">
-          {t("resultsCount", { count: catalogUsers.length })}
+          {t("resultsCount", { count: members.length })}
         </div>
       ) : (
         <div className="px-4 pb-2 md:px-6 xl:px-8">
@@ -69,7 +73,7 @@ export default async function CatalogPage({
       )}
 
       {/* Blocked members drop out client-side; see `CatalogGrid`. */}
-      <CatalogGrid users={catalogUsers} visibleLevels={[...visible]} />
+      <CatalogGrid users={members} visibleLevels={[...visible]} />
     </>
   );
 }

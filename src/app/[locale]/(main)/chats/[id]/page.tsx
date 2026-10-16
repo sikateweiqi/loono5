@@ -5,9 +5,8 @@ import { MessageThread } from "@/components/chat/message-thread";
 import { ThreadActions } from "@/components/chat/thread-actions";
 import { ThreadModeration } from "@/components/chat/thread-moderation";
 import { ScreenHeader } from "@/components/layout/screen-header";
-import { getCurrentUser } from "@/lib/auth/current-user";
-import { findThread } from "@/lib/mock-data";
-import { resolveProfileIdByHandle } from "@/lib/supabase/moderation";
+import { listChats } from "@/lib/db/chat";
+import { getViewerProfile } from "@/lib/db/viewer";
 
 /**
  * The message list is fetched by the client (`MessageThread`) rather than
@@ -26,48 +25,50 @@ export default async function ChatThreadPage({
 
   const t = await getTranslations("chats");
 
-  const thread = findThread(id);
-  if (!thread) {
+  /*
+    The conversation comes from the database, looked up among the viewer's own
+    threads by slug — the same slug the list links to. There is no mock
+    catalogue to fall back on any more, so an unknown slug (or one that was
+    hidden from this member's list) is a genuine 404 rather than an empty
+    thread.
+  */
+  const viewer = await getViewerProfile();
+  const chats = viewer ? await listChats(viewer.id) : [];
+  const chat = chats.find((row) => row.slug === id);
+
+  /*
+    `peer_id` has to exist: it is what blocking and reporting act on, and it is
+    the only peer identity the client can send. A row without one is a
+    conversation nothing can be done with — better a 404 than a thread whose
+    menu silently fails on click.
+  */
+  if (!chat || !chat.peer_id) {
     notFound();
   }
 
-  const viewer = await getCurrentUser();
-
-  /*
-    The peer's profile id is what blocking and reporting act on. It resolves
-    from the seeded catalogue (`supabase/seed.sql`); an unseeded peer yields
-    null and the moderation actions are disabled rather than failing on click.
-  */
-  const peerId = await resolveProfileIdByHandle(thread.peer.id).catch(
-    () => null,
-  );
+  const peerName = chat.peer_name ?? "";
 
   return (
     <ThreadModeration
-      slug={thread.id}
+      slug={chat.slug}
       peer={{
-        id: thread.peer.id,
-        name: thread.peer.name,
-        avatarUrl: thread.peer.avatarUrl,
-        level: thread.peer.level,
-        isOnline: thread.peer.isOnline,
+        id: chat.peer_id,
+        name: peerName,
+        avatarUrl: chat.peer_avatar_url,
+        level: chat.peer_level,
+        isOnline: chat.peer_is_online,
       }}
-      peerId={peerId}
-      viewer={{
-        displayName: viewer.name,
-        avatarUrl: viewer.avatarUrl,
-        level: viewer.subscription.level ?? viewer.level,
-      }}
+      peerId={chat.peer_id}
     >
       <ScreenHeader
         backHref="/chats"
         // The rail is always visible from xl up, so the back arrow would
         // only ever lead to the "pick a conversation" placeholder.
         backClassName="xl:hidden"
-        title={thread.peer.name}
+        title={peerName}
         action={
           <div className="flex items-center gap-1">
-            {thread.peer.isOnline ? (
+            {chat.peer_is_online ? (
               <span className="text-[11px] text-emerald-600">
                 {t("online")}
               </span>

@@ -3,6 +3,7 @@
 import {
   BadgeCheck,
   CircleDollarSign,
+  Compass,
   Globe2,
   Heart,
   Languages,
@@ -15,12 +16,15 @@ import {
 import { useTranslations } from "next-intl";
 import { useMemo, useState, type ReactNode } from "react";
 
+import { CountryCityField } from "@/components/onboarding/country-city-field";
 import { Screen } from "@/components/layout/screen";
 import { ScreenHeader } from "@/components/layout/screen-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Slider } from "@/components/ui/slider";
+import { Textarea } from "@/components/ui/textarea";
 import { Link } from "@/i18n/navigation";
 import {
   AGE_MAX,
@@ -33,11 +37,15 @@ import {
   FREQUENCY_OPTIONS,
   HEIGHT_CM_MAX,
   HEIGHT_CM_MIN,
+  INTEREST_OPTIONS,
   LANGUAGE_OPTIONS,
   MARITAL_OPTIONS,
   PREMIUM_PREFERENCE_MIN_LEVEL,
   RELIGION_OPTIONS,
+  SLIDER_STEP,
   TATTOO_OPTIONS,
+  WEIGHT_KG_MAX,
+  WEIGHT_KG_MIN,
   exclusivePrice,
   exclusiveTotal,
   isExclusiveConditionAvailable,
@@ -274,8 +282,156 @@ function Field({
 }
 
 /**
+ * 单值刻度字段：一条滑动条 + 右侧读数。
+ *
+ * 「未填」是一个真实状态，所以读数在 `value === null` 时显示 `—`，
+ * 而滑块本身停在区间中点。用户第一次拖动（或点轨道）才产生真实值 ——
+ * 这与出生日期滚轮的处理方式一致：**不让界面看起来像是已经填过了**。
+ *
+ * 为什么把数值只放在读数里、不放进输入框：这是本次改动的目的 ——
+ * 身高体重是一个连续量，"拖动"比"敲数字"快，而且不会敲出 999。
+ */
+function MetricSlider({
+  label,
+  unit,
+  value,
+  min,
+  max,
+  onChange,
+  ariaLabel,
+}: {
+  label: string;
+  unit: string;
+  value: number | null;
+  min: number;
+  max: number;
+  onChange: (value: number | null) => void;
+  ariaLabel: string;
+}) {
+  const t = useTranslations("profileForm");
+
+  return (
+    <Field label={label} hint={unit}>
+      <div className="flex items-center gap-3">
+        <Slider
+          value={[value ?? Math.round((min + max) / 2)]}
+          onChange={([next]) => onChange(next)}
+          min={min}
+          max={max}
+          step={SLIDER_STEP}
+          ariaLabels={[ariaLabel]}
+          className="flex-1"
+        />
+
+        <span className="w-16 shrink-0 text-right text-sm font-semibold tabular-nums">
+          {value === null ? (
+            <span className="text-xs font-normal text-muted-foreground">
+              {t("slider.notSet")}
+            </span>
+          ) : (
+            `${value} ${unit}`
+          )}
+        </span>
+      </div>
+
+      {value === null ? null : (
+        <button
+          type="button"
+          onClick={() => onChange(null)}
+          className="self-start text-[11px] text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+        >
+          {t("slider.clear")}
+        </button>
+      )}
+    </Field>
+  );
+}
+
+/**
+ * 区间刻度字段：双滑块 + `最小 — 最大` 读数。
+ *
+ * 两个端点都可以是"不限"，所以读数在两端都为空时显示"不限"，
+ * 只填一端时另一端显示 `—`。区间滑块天生会把两个端点都填上某个值
+ * （滑块总得停在某处），所以这里保留了"只定下限或只定上限"的表达能力 ——
+ * "25 岁以上"和"25–80 岁"对用户是两个不同的意思。
+ */
+function RangeMetricSlider({
+  label,
+  unit,
+  minValue,
+  maxValue,
+  min,
+  max,
+  onMin,
+  onMax,
+  labels,
+}: {
+  label: string;
+  unit?: string;
+  minValue: number | null;
+  maxValue: number | null;
+  min: number;
+  max: number;
+  onMin: (value: number | null) => void;
+  onMax: (value: number | null) => void;
+  labels: { from: string; to: string; any: string; clear: string };
+}) {
+  // 未设定时的默认停靠点：下半区间用下四分位、上半区间用上四分位。
+  // 两端都停在正中会让两个滑块重叠，用户得先猜哪个是哪个。
+  const lower = minValue ?? Math.round(min + (max - min) * 0.25);
+  const upper = maxValue ?? Math.round(min + (max - min) * 0.75);
+
+  return (
+    <Field label={label} hint={unit}>
+      <Slider
+        value={[lower, upper]}
+        onChange={([nextLower, nextUpper]) => {
+          // 拖动任一端都视为"用户开始设定这一项"，两端一并写实。
+          // 否则会出现"下限生效、上限仍是不限"这种用户没有表达过的组合。
+          onMin(nextLower);
+          onMax(nextUpper);
+        }}
+        min={min}
+        max={max}
+        step={SLIDER_STEP}
+        ariaLabels={[labels.from, labels.to]}
+      />
+
+      <div className="flex items-center justify-between gap-2 text-xs">
+        <span className="font-medium tabular-nums">
+          {minValue === null && maxValue === null
+            ? labels.any
+            : `${minValue ?? "—"} — ${maxValue ?? "—"}${unit ? ` ${unit}` : ""}`}
+        </span>
+
+        {minValue === null && maxValue === null ? null : (
+          <button
+            type="button"
+            onClick={() => {
+              onMin(null);
+              onMax(null);
+            }}
+            className="text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+          >
+            {labels.clear}
+          </button>
+        )}
+      </div>
+    </Field>
+  );
+}
+
+/**
  * Chip picker used for every enum field. Multi-select when `multiple`, and a
  * segmented single-select otherwise — both write through the same callback.
+ *
+ * `name` 传了就顺带渲染隐藏 input，让所选值能随表单提交。
+ *
+ * 为什么需要它：这个控件渲染的是 `<button>`，本身不产生表单字段。
+ * 注册第二步要真的把这十几个属性写库，而这些值全在 React state 里 ——
+ * 没有隐藏字段的话，服务端收到的表单里一个属性都没有。
+ * 个人资料编辑器（`ProfileEditor`）不传 `name`：它是纯本地状态，
+ * 存在 `<form>` 之外，隐藏字段也不会被提交。
  */
 function ChipPicker<T extends string>({
   options,
@@ -283,6 +439,7 @@ function ChipPicker<T extends string>({
   onChange,
   multiple = false,
   labelOf,
+  name,
   className,
 }: {
   options: Option<T>[];
@@ -290,6 +447,8 @@ function ChipPicker<T extends string>({
   onChange: (next: T[]) => void;
   multiple?: boolean;
   labelOf: (key: string) => string;
+  /** 表单字段名。传了就渲染隐藏 input。 */
+  name?: string;
   className?: string;
 }) {
   return (
@@ -321,6 +480,12 @@ function ChipPicker<T extends string>({
           </button>
         );
       })}
+
+      {name
+        ? selected.map((value) => (
+            <input key={value} type="hidden" name={name} value={value} />
+          ))
+        : null}
     </div>
   );
 }
@@ -409,12 +574,22 @@ function PremiumGate({
 export function AboutTab({
   profile,
   update,
+  showResidence = true,
 }: {
   profile: PersonalProfile;
   update: <K extends keyof PersonalProfile>(
     key: K,
     value: PersonalProfile[K],
   ) => void;
+  /**
+   * 是否渲染居住国家/城市。
+   *
+   * 注册引导里传 `false`：居住地在**第一步**「完善个人资料」已经问过了
+   * （那里是"国家 → 城市"级联下拉），第二步再问一遍纯属重复，
+   * 用户会以为自己第一遍没填上。
+   * 个人资料编辑器保持 `true`，否则会员在注册之后就再也改不了居住地。
+   */
+  showResidence?: boolean;
 }) {
   const t = useTranslations("profileForm");
 
@@ -422,6 +597,7 @@ export function AboutTab({
     options: Option<T>[],
     value: T | null,
     onChange: (next: T | null) => void,
+    name?: string,
   ) => (
     <ChipPicker
       options={options}
@@ -429,36 +605,39 @@ export function AboutTab({
       selected={value ? [value] : []}
       onChange={(next) => onChange(next[0] ?? null)}
       labelOf={t}
+      name={name}
     />
   );
 
   return (
     <>
       <SectionCard icon={UserRound} title={t("sections.basic")}>
-        <Field
+        <MetricSlider
           label={t("height.label")}
-          htmlFor="heightCm"
-          hint={t("height.unit")}
-        >
-          <Input
-            id="heightCm"
-            name="heightCm"
-            type="number"
-            inputMode="numeric"
-            min={HEIGHT_CM_MIN}
-            max={HEIGHT_CM_MAX}
-            placeholder={t("height.placeholder")}
-            value={profile.heightCm ?? ""}
-            onChange={(event) => {
-              const raw = event.target.value;
-              update("heightCm", raw === "" ? null : Number(raw));
-            }}
-          />
-        </Field>
+          unit={t("height.unit")}
+          value={profile.heightCm}
+          min={HEIGHT_CM_MIN}
+          max={HEIGHT_CM_MAX}
+          onChange={(next) => update("heightCm", next)}
+          ariaLabel={t("height.label")}
+        />
+
+        <MetricSlider
+          label={t("weight.label")}
+          unit={t("weight.unit")}
+          value={profile.weightKg}
+          min={WEIGHT_KG_MIN}
+          max={WEIGHT_KG_MAX}
+          onChange={(next) => update("weightKg", next)}
+          ariaLabel={t("weight.label")}
+        />
 
         <Field label={t("education.label")}>
-          {single(EDUCATION_OPTIONS, profile.education, (next) =>
-            update("education", next),
+          {single(
+            EDUCATION_OPTIONS,
+            profile.education,
+            (next) => update("education", next),
+            "education",
           )}
         </Field>
 
@@ -473,15 +652,61 @@ export function AboutTab({
         </Field>
 
         <Field label={t("marital.label")}>
-          {single(MARITAL_OPTIONS, profile.maritalStatus, (next) =>
-            update("maritalStatus", next),
+          {single(
+            MARITAL_OPTIONS,
+            profile.maritalStatus,
+            (next) => update("maritalStatus", next),
+            "maritalStatus",
           )}
         </Field>
 
         <Field label={t("children.label")}>
-          {single(CHILDREN_OPTIONS, profile.children, (next) =>
-            update("children", next),
+          {single(
+            CHILDREN_OPTIONS,
+            profile.children,
+            (next) => update("children", next),
+            "children",
           )}
+        </Field>
+      </SectionCard>
+
+      {/*
+        兴趣与自我介绍。
+        本轮（2026-10-16）从注册第一步挪到这里：它们和身高学历一样是
+        "可以慢慢补的个人属性"，而不是注册时必须定下的身份项。
+        分区标题沿用 `sections.lifestyle` 之外的新键，避免把两件不同的事
+        塞进同一个语义槽。
+      */}
+      <SectionCard icon={Compass} title={t("sections.interests")}>
+        <Field label={t("interests.label")} hint={t("interests.hint")}>
+          {/*
+            `labelOf` 传恒等函数而不是 `t`：兴趣标签的值本身就是展示文本
+            （`Art` / `Coffee`），不走 i18n。若传 `t`，它会去查一个不存在的
+            键，而 next-intl 对缺失键是**静默回退成 key 原文**的 ——
+            结果是"看起来能用，但一旦有人真的加了同名键就会串词"。
+            显式恒等更诚实。
+          */}
+          <ChipPicker
+            multiple
+            options={INTEREST_OPTIONS}
+            selected={profile.interests}
+            onChange={(next) => update("interests", next)}
+            labelOf={(key) => key}
+            name="interests"
+            className="-mt-1"
+          />
+        </Field>
+
+        <Field label={t("bio.label")} htmlFor="bio">
+          <Textarea
+            id="bio"
+            name="bio"
+            rows={4}
+            maxLength={500}
+            placeholder={t("bio.placeholder")}
+            value={profile.bio}
+            onChange={(event) => update("bio", event.target.value)}
+          />
         </Field>
       </SectionCard>
 
@@ -496,62 +721,70 @@ export function AboutTab({
           selected={profile.languages}
           onChange={(next) => update("languages", next)}
           labelOf={t}
+          name="languages"
           className="-mt-1"
         />
       </SectionCard>
 
       <SectionCard icon={Heart} title={t("sections.lifestyle")}>
         <Field label={t("religion.label")}>
-          {single(RELIGION_OPTIONS, profile.religion, (next) =>
-            update("religion", next),
+          {single(
+            RELIGION_OPTIONS,
+            profile.religion,
+            (next) => update("religion", next),
+            "religion",
           )}
         </Field>
 
         <Field label={t("tattoo.label")}>
-          {single(TATTOO_OPTIONS, profile.tattoo, (next) =>
-            update("tattoo", next),
+          {single(
+            TATTOO_OPTIONS,
+            profile.tattoo,
+            (next) => update("tattoo", next),
+            "tattoo",
           )}
         </Field>
 
         <Field label={t("smoking.label")}>
-          {single(FREQUENCY_OPTIONS, profile.smoking, (next) =>
-            update("smoking", next),
+          {single(
+            FREQUENCY_OPTIONS,
+            profile.smoking,
+            (next) => update("smoking", next),
+            "smoking",
           )}
         </Field>
 
         <Field label={t("drinking.label")}>
-          {single(FREQUENCY_OPTIONS, profile.drinking, (next) =>
-            update("drinking", next),
+          {single(
+            FREQUENCY_OPTIONS,
+            profile.drinking,
+            (next) => update("drinking", next),
+            "drinking",
           )}
         </Field>
       </SectionCard>
 
       <SectionCard icon={CircleDollarSign} title={t("sections.assets")}>
         <Field label={t("asset.label")} hint={t("asset.verifiedHint")}>
-          {single(ASSET_OPTIONS, profile.assetRange, (next) =>
-            update("assetRange", next),
+          {single(
+            ASSET_OPTIONS,
+            profile.assetRange,
+            (next) => update("assetRange", next),
+            "assetRange",
           )}
         </Field>
 
-        <Field label={t("country.label")}>
-          <ChipPicker
-            multiple
-            options={COUNTRY_OPTIONS}
-            selected={profile.countryCode ? [profile.countryCode] : []}
-            onChange={(next) => update("countryCode", next[0] ?? "")}
-            labelOf={t}
+        {showResidence ? (
+          <CountryCityField
+            countryCode={profile.countryCode}
+            city={profile.city}
+            onChange={({ countryCode, city }) => {
+              update("countryCode", countryCode);
+              update("city", city);
+            }}
+            idPrefix="aboutResidence"
           />
-        </Field>
-
-        <Field label={t("city.label")} htmlFor="city">
-          <Input
-            id="city"
-            name="city"
-            placeholder={t("city.placeholder")}
-            value={profile.city}
-            onChange={(event) => update("city", event.target.value)}
-          />
-        </Field>
+        ) : null}
       </SectionCard>
     </>
   );
@@ -621,45 +854,12 @@ export function PartnerTab({
     />
   );
 
-  const rangeRow = (
-    minValue: number | null,
-    maxValue: number | null,
-    onMin: (value: number | null) => void,
-    onMax: (value: number | null) => void,
-    bounds: { min: number; max: number },
-    unit?: string,
-  ) => (
-    <div className="flex items-center gap-2">
-      <Input
-        type="number"
-        inputMode="numeric"
-        aria-label={tp("range.from")}
-        min={bounds.min}
-        max={bounds.max}
-        placeholder={tp("range.from")}
-        value={minValue ?? ""}
-        onChange={(event) =>
-          onMin(event.target.value === "" ? null : Number(event.target.value))
-        }
-      />
-      <span className="shrink-0 text-xs text-muted-foreground">—</span>
-      <Input
-        type="number"
-        inputMode="numeric"
-        aria-label={tp("range.to")}
-        min={bounds.min}
-        max={bounds.max}
-        placeholder={tp("range.to")}
-        value={maxValue ?? ""}
-        onChange={(event) =>
-          onMax(event.target.value === "" ? null : Number(event.target.value))
-        }
-      />
-      {unit ? (
-        <span className="shrink-0 text-xs text-muted-foreground">{unit}</span>
-      ) : null}
-    </div>
-  );
+  const rangeLabels = {
+    from: tp("range.from"),
+    to: tp("range.to"),
+    any: tp("range.any"),
+    clear: tf("slider.clear"),
+  };
 
   return (
     <>
@@ -678,27 +878,29 @@ export function PartnerTab({
         title={tp("freeSection.title")}
         hint={tp("freeSection.hint")}
       >
-        <Field label={tp("age.label")}>
-          {rangeRow(
-            prefs.ageMin,
-            prefs.ageMax,
-            (value) => updatePrefs("ageMin", value),
-            (value) => updatePrefs("ageMax", value),
-            { min: AGE_MIN, max: AGE_MAX },
-            tp("range.unitAge"),
-          )}
-        </Field>
+        <RangeMetricSlider
+          label={tp("age.label")}
+          unit={tp("range.unitAge")}
+          minValue={prefs.ageMin}
+          maxValue={prefs.ageMax}
+          min={AGE_MIN}
+          max={AGE_MAX}
+          onMin={(value) => updatePrefs("ageMin", value)}
+          onMax={(value) => updatePrefs("ageMax", value)}
+          labels={rangeLabels}
+        />
 
-        <Field label={tp("height.label")}>
-          {rangeRow(
-            prefs.heightMin,
-            prefs.heightMax,
-            (value) => updatePrefs("heightMin", value),
-            (value) => updatePrefs("heightMax", value),
-            { min: HEIGHT_CM_MIN, max: HEIGHT_CM_MAX },
-            tp("range.unitHeight"),
-          )}
-        </Field>
+        <RangeMetricSlider
+          label={tp("height.label")}
+          unit={tp("range.unitHeight")}
+          minValue={prefs.heightMin}
+          maxValue={prefs.heightMax}
+          min={HEIGHT_CM_MIN}
+          max={HEIGHT_CM_MAX}
+          onMin={(value) => updatePrefs("heightMin", value)}
+          onMax={(value) => updatePrefs("heightMax", value)}
+          labels={rangeLabels}
+        />
 
         <Field label={tp("countries.label")}>
           <ChipPicker

@@ -2,7 +2,7 @@ import { setRequestLocale } from "next-intl/server";
 
 import { ProfileEditor } from "@/components/profile/profile-editor";
 import { getCurrentUser } from "@/lib/auth/current-user";
-import { emptyPreferences, emptyProfile } from "@/lib/mock-data";
+import { emptyPreferences, emptyProfile } from "@/lib/profile-defaults";
 
 /**
  * 「完善个人信息」 — module P.

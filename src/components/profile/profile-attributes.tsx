@@ -77,6 +77,17 @@ export function ProfileAttributes({
     });
   }
 
+  // 体重与身高成对出现，紧邻着排在后面。
+  // 同样是敏感项（`onboarding.attributes` 的提示里写明了不公开展示），
+  // 但既然会员自己填了，在「详细资料」里回看是必要的。
+  if (profile.weightKg) {
+    rows.push({
+      key: "weight",
+      label: t("weight.label"),
+      value: t("weight.value", { kg: profile.weightKg }),
+    });
+  }
+
   const education = labelOf(EDUCATION_OPTIONS, profile.education);
   if (education) {
     rows.push({

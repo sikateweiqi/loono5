@@ -2,12 +2,12 @@ import { ArrowRight, MapPin } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 
 import { Link } from "@/i18n/navigation";
-import { catalogUsers } from "@/lib/mock-data";
+import { listCatalogMembers } from "@/lib/db/members";
 
 import { Container, Section, SectionHeading } from "./section";
 
 /**
- * Cities with a live member presence. Seeded from the mock directory so the
+ * Cities with a live member presence. Seeded from the member directory so the
  * list grows automatically as members are added.
  */
 const EXTRA_CITIES = [
@@ -24,8 +24,12 @@ const EXTRA_CITIES = [
 export async function RegionsSection() {
   const t = await getTranslations("portal");
 
+  const members = await listCatalogMembers();
   const cities = Array.from(
-    new Set([...catalogUsers.map((user) => user.city), ...EXTRA_CITIES]),
+    new Set([
+      ...members.map((user) => user.city).filter(Boolean),
+      ...EXTRA_CITIES,
+    ]),
   ).sort((a, b) => a.localeCompare(b));
 
   return (

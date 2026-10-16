@@ -5,20 +5,25 @@ import { RotatingTitle } from "@/components/landing/rotating-title";
 import { StatsRow, type LandingStat } from "@/components/landing/stats-row";
 import { VerifiedBadge } from "@/components/landing/verified-badge";
 import { Link } from "@/i18n/navigation";
-import { catalogUsers } from "@/lib/mock-data";
+import { listCatalogMembers } from "@/lib/db/members";
 import { cn } from "@/lib/utils";
+import type { PublicUser } from "@/types/user";
 
 import { Container } from "./section";
 
 /**
  * Staggered collage of member tiles.
  *
- * Photos come from the shared mock directory, so the hero can never show a
- * face the rest of the product does not know about.
+ * Photos come from the same member directory the catalog reads, so the hero can
+ * never show a face the rest of the product does not know about.
  */
-function MemberCollage({ caption }: { caption: string }) {
-  const picks = catalogUsers.slice(0, 6);
-
+function MemberCollage({
+  caption,
+  picks,
+}: {
+  caption: string;
+  picks: PublicUser[];
+}) {
   return (
     <div className="relative">
       <div className="grid grid-cols-3 gap-3 pb-8">
@@ -66,6 +71,9 @@ export async function DesktopHero() {
 
   const titles = tg.raw("heroTitles") as string[];
 
+  // 取真实会员填充拼贴墙；库为空时退化成空数组，版面自然收起而不是报错。
+  const picks = (await listCatalogMembers()).slice(0, 6);
+
   const stats: LandingStat[] = [
     { value: "120K+", label: t("hero.stats.members") },
     { value: "80+", label: t("hero.stats.countries") },
@@ -94,7 +102,7 @@ export async function DesktopHero() {
 
           <div className="flex flex-wrap items-center gap-3">
             <Link
-              href="/auth"
+              href="/auth/register"
               className="loono-cta flex h-13 items-center gap-2 rounded-2xl px-8 text-base font-bold tracking-tight"
             >
               {t("hero.ctaPrimary")}
@@ -116,7 +124,7 @@ export async function DesktopHero() {
           <StatsRow stats={stats} className="w-full max-w-md" />
         </div>
 
-        <MemberCollage caption={t("hero.collageCaption")} />
+        <MemberCollage caption={t("hero.collageCaption")} picks={picks} />
       </Container>
 
       {/* The single most persuasive line on the page, on its own. */}

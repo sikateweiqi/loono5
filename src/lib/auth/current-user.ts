@@ -2,7 +2,7 @@ import "server-only";
 
 import { TRIAL_DAYS } from "@/lib/auth/constants";
 import { getMockSession } from "@/lib/auth/session";
-import { currentUser } from "@/lib/mock-data";
+import { getDefaultViewer, getMemberByIdentifier } from "@/lib/db/members";
 import type { PublicUser, UserLevel } from "@/types/user";
 
 /**
@@ -32,17 +32,39 @@ function withLevel(user: PublicUser, level: UserLevel): PublicUser {
 }
 
 /**
- * The signed-in member, with the tier taken from the mock session so the
- * one-tap level switcher immediately changes what is visible.
+ * The signed-in member, read from PostgreSQL.
+ *
+ * 数据来源变更说明：原型阶段这里返回的是 `lib/mock-data` 的 `currentUser` 常量；
+ * 现在按会话里的登录标识（手机号或邮箱）去 `users`/`profiles` 查真实档案，
+ * 未登录则回落到种子里的展示账号 `u_current`（浏览态），
+ * 保持"不注册也能逛"的既有体验。
+ *
+ * 层级仍取自会话（`level`）—— 那是 demo 里的一键档位切换器写的，
+ * 用来演示可见性矩阵（PRD 规则 2），与库里的订阅记录相互独立。
  */
 export async function getCurrentUser(): Promise<PublicUser> {
   const session = await getMockSession();
-  return withLevel(currentUser, session?.level ?? DEFAULT_DEMO_LEVEL);
+
+  const signedIn = session
+    ? await getMemberByIdentifier(session.channel, session.identifier)
+    : null;
+  const member = signedIn ?? (await getDefaultViewer());
+
+  if (!member) {
+    // 库里连种子账号都没有 —— 说明迁移/种子没跑，直接把话说清楚，
+    // 而不是抛一个 "cannot read property id of null" 让人猜。
+    throw new Error(
+      "数据库里找不到会员档案。请先执行 `npm run db:migrate` 与 `npm run db:seed`。",
+    );
+  }
+
+  return withLevel(member, session?.level ?? DEFAULT_DEMO_LEVEL);
 }
 
 /** null when signed out. */
 export async function getCurrentLevel(): Promise<UserLevel | null> {
   const session = await getMockSession();
+
   return session?.level ?? null;
 }
 

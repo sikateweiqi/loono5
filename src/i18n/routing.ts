@@ -9,7 +9,7 @@ export type Locale = (typeof locales)[number];
  * so it is the default locale.
  *
  * `as-needed` keeps the default locale unprefixed so that URLs match
- * the PRD sitemap exactly: `/`, `/auth`, `/catalog`, ...
+ * the PRD sitemap exactly: `/`, `/auth/register`, `/catalog`, ...
  * Other locales are prefixed: `/ru/catalog`, `/en/catalog`.
  */
 export const routing = defineRouting({

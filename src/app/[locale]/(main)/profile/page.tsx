@@ -27,11 +27,8 @@ import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Link } from "@/i18n/navigation";
 import { getCurrentUser } from "@/lib/auth/current-user";
-import {
-  emptyPreferences,
-  emptyProfile,
-  plans,
-} from "@/lib/mock-data";
+import { listPlans } from "@/lib/db/plans";
+import { emptyPreferences, emptyProfile } from "@/lib/profile-defaults";
 import { planLabelKey } from "@/lib/plans";
 import { profileCompletion } from "@/lib/profile-options";
 import { daysUntilExpiry, hasActiveSubscription } from "@/lib/tiers";
@@ -53,6 +50,8 @@ export default async function ProfilePage({
 
   const active = hasActiveSubscription(currentUser);
   const expiresAt = currentUser.subscription.expiresAt;
+  // 价格来自 plans 表而不是代码常量：运营调价不该需要发版（PRD P6）。
+  const plans = await listPlans();
   const plan = plans.find(
     (item) => item.level === currentUser.subscription.level,
   );
@@ -274,13 +273,8 @@ export default async function ProfilePage({
               </Button>
             </Card>
 
-            {/* Referral — own code and share link, read from Supabase. */}
-            <ReferralLink
-              displayName={currentUser.name}
-              avatarUrl={currentUser.avatarUrl}
-              level={currentUser.subscription.level ?? currentUser.level}
-              className="order-9 xl:order-none"
-            />
+            {/* Referral — own code and share link, read from the database. */}
+            <ReferralLink className="order-9 xl:order-none" />
           </div>
         </div>
       </Screen>

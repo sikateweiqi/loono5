@@ -19,6 +19,9 @@ export default async function DeleteAccountPage({
 
   const session = await getMockSession();
 
+  // 只传手机号：注销流程要用它做身份核对（界面里会遮罩展示）。
+  // 邮箱注册的账号目前拿到 null，界面显示 "—" —— 邮箱通道的核对方式
+  // 还没定（是回一封确认信，还是人工审核），定了再补这里，不先假装支持。
   return (
     <AppShell>
       <DeleteAccountFlow phone={session?.phone ?? null} />

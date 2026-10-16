@@ -2,7 +2,7 @@ import { Check, Crown, Sparkles } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 
 import { Link } from "@/i18n/navigation";
-import { plans } from "@/lib/mock-data";
+import { listPlans } from "@/lib/db/plans";
 import {
   formatPrice,
   isContactSales,
@@ -19,6 +19,8 @@ export async function PricingSection({ locale }: { locale: string }) {
   const ts = await getTranslations("subscription");
 
   const features = t.raw("pricing.planFeatures") as string[][];
+  // 档位与价格来自 `plans` 表，与站内付费墙共用同一份数据 —— 运营调价不用发版。
+  const plans = await listPlans();
 
   return (
     <Section id="pricing">
@@ -107,7 +109,7 @@ export async function PricingSection({ locale }: { locale: string }) {
                 </ul>
 
                 <Link
-                  href="/auth"
+                  href="/auth/register"
                   className={cn(
                     "mt-auto flex h-11 items-center justify-center rounded-2xl text-sm font-semibold transition-colors",
                     popular ? "loono-cta" : "loono-cta-ghost",

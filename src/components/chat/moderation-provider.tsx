@@ -10,7 +10,7 @@ import {
   type ReactNode,
 } from "react";
 
-import { blockUser, isBlocked, unblockUser } from "@/lib/supabase/moderation";
+import { blockUser, isBlocked, unblockUser } from "@/lib/chat-client";
 
 /**
  * Blocking state for the conversation currently on screen.

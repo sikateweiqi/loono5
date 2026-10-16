@@ -10,8 +10,11 @@ import {
 } from "react";
 
 import { ModerationProvider } from "@/components/chat/moderation-provider";
-import { ensureChatThread, type PeerDisplay } from "@/lib/supabase/chat";
-import { ensureViewerProfile } from "@/lib/supabase/profile";
+import {
+  ensureChatThread,
+  ensureViewerProfile,
+  type PeerDisplay,
+} from "@/lib/chat-client";
 
 /**
  * Resolves the conversation once for everything on this screen.
@@ -48,14 +51,12 @@ export function ThreadModeration({
   slug,
   peer,
   peerId,
-  viewer,
   children,
 }: {
   slug: string;
   peer: PeerDisplay;
   /** The peer's profile id when they have one; null for an unseeded peer. */
   peerId: string | null;
-  viewer: { displayName: string; avatarUrl: string | null; level: number };
   children: ReactNode;
 }) {
   const [chatId, setChatId] = useState<string | null>(null);
@@ -67,13 +68,10 @@ export function ThreadModeration({
 
     async function resolve() {
       try {
-        const profile = await ensureViewerProfile(viewer);
-        const chat = await ensureChatThread({
-          slug,
-          viewerProfileId: profile.id,
-          peer,
-          peerId,
-        });
+        // The viewer comes from the session cookie, so nothing is passed in:
+        // the profile row exists by the time this screen is reachable.
+        const profile = await ensureViewerProfile();
+        const chat = await ensureChatThread({ slug, peer, peerId });
 
         if (!active) return;
 
@@ -93,8 +91,8 @@ export function ThreadModeration({
     return () => {
       active = false;
     };
-    // `peer` and `viewer` are literals from the server component; depending on
-    // them would re-resolve on every render.
+    // `peer` is a literal from the server component; depending on it would
+    // re-resolve on every render.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slug]);
 

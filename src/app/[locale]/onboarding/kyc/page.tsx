@@ -2,6 +2,7 @@ import { Camera, CheckCircle2, Clock, XCircle } from "lucide-react";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
 import { Screen } from "@/components/layout/screen";
+import { KycBirthDate } from "@/components/onboarding/kyc-birth-date";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,7 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Link } from "@/i18n/navigation";
-import { currentUser } from "@/lib/mock-data";
+import { getCurrentUser } from "@/lib/auth/current-user";
 
 /** Status is derived from the member's KYC record; see `KycStatus`. */
 const STATUS_META = {
@@ -33,9 +34,11 @@ export default async function OnboardingKycPage({
   setRequestLocale(locale);
 
   const t = await getTranslations("onboarding.kyc");
-  const status = STATUS_META[currentUser.kycStatus];
+  // KYC 状态是会员档案上的真实字段，不再是常量。
+  const member = await getCurrentUser();
+  const status = STATUS_META[member.kycStatus];
   const StatusIcon = status.icon;
-  const isApproved = currentUser.kycStatus === "approved";
+  const isApproved = member.kycStatus === "approved";
 
   return (
     <Screen
@@ -94,7 +97,12 @@ export default async function OnboardingKycPage({
 
         <div className="flex flex-col gap-2">
           <Label htmlFor="birthDate">{t("birthDateLabel")}</Label>
-          <Input id="birthDate" name="birthDate" type="date" required />
+          {/*
+            与「完善个人资料」用同一个滚轮控件，而不是 `<input type="date">`：
+            原生日期控件在三个平台长得完全不一样、不受设计令牌控制，
+            而三列滚轮在手机与桌面上是同一个形态。
+          */}
+          <KycBirthDate />
         </div>
 
         <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-border bg-muted/40 p-6 text-center">
@@ -110,9 +118,7 @@ export default async function OnboardingKycPage({
             size="sm"
             className="rounded-full"
           >
-            {currentUser.kycStatus === "approved"
-              ? t("resubmit")
-              : t("startFace")}
+            {isApproved ? t("resubmit") : t("startFace")}
           </Button>
         </div>
       </form>

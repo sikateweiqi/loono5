@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Link } from "@/i18n/navigation";
 import { getCurrentUser } from "@/lib/auth/current-user";
-import { findUser } from "@/lib/mock-data";
+import { getMember } from "@/lib/db/members";
 import { canView, effectiveLevel, isLocked } from "@/lib/tiers";
 
 export default async function UserProfilePage({
@@ -29,7 +29,8 @@ export default async function UserProfilePage({
   const tt = await getTranslations("tier");
   const tv = await getTranslations("verification");
 
-  const user = findUser(id);
+  // 路由参数既可能是 uuid 也可能是 handle（`u_01`），getMember 两种都认。
+  const user = await getMember(id);
   if (!user) {
     notFound();
   }

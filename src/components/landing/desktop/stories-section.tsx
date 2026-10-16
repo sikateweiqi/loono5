@@ -2,7 +2,7 @@ import { ArrowRight, Quote, Star } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 
 import { Link } from "@/i18n/navigation";
-import { catalogUsers } from "@/lib/mock-data";
+import { listCatalogMembers } from "@/lib/db/members";
 
 import { Container, Section, SectionHeading } from "./section";
 
@@ -12,11 +12,11 @@ interface Story {
   quote: string;
 }
 
-/** Testimonial cards. Photos are drawn from the mock directory in pairs. */
+/** Testimonial cards. Photos are drawn from the member directory in pairs. */
 export async function StoriesSection() {
   const t = await getTranslations("portal");
   const items = t.raw("stories.items") as Story[];
-  const photos = catalogUsers;
+  const photos = await listCatalogMembers();
 
   return (
     <Section id="stories">

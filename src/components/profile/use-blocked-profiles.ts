@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-import { listBlockedProfileIds } from "@/lib/supabase/moderation";
+import { listBlockedProfileIds } from "@/lib/chat-client";
 
 /**
  * The set of profile ids this member has blocked.

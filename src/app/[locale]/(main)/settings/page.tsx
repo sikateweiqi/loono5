@@ -83,7 +83,7 @@ export default async function SettingsPage({
         {session ? (
           <div className="mb-4 flex items-center justify-between rounded-2xl border border-border bg-card px-4 py-3 text-xs">
             <span className="text-muted-foreground">{tm("session")}</span>
-            <span className="font-mono">{session.phone}</span>
+            <span className="font-mono">{session.identifier}</span>
           </div>
         ) : null}
 

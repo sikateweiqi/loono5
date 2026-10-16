@@ -1,3 +1,10 @@
+import "server-only";
+
+import {
+  listActivities,
+  listDailyRecords,
+  listPartners,
+} from "@/lib/db/partner";
 import type {
   PartnerActivity,
   PartnerDailyRecord,
@@ -5,19 +12,14 @@ import type {
   PartnerSummary,
 } from "@/types/partner";
 
-import {
-  partnerActivities,
-  partnerLedger,
-  partnerProfiles,
-} from "./mock-agents";
-
 /**
- * Query layer for the operator's partner lookup.
+ * 算子台的合作方查询层。
  *
- * Everything here is a pure function over the ledger: parse the requested
- * window, filter, aggregate. Keeping it separate from both the mock data and
- * the page means the reporting endpoint can replace `mock-agents` without
- * touching the filter UI, and the range rules are testable on their own.
+ * 这里大部分仍是纯函数：解析时间窗、过滤、聚合 —— 区间规则（`resolveRange`、
+ * `buildTrend`、各种比率）都还保持纯粹，可以单独测。真正落库的只有三个接缝：
+ * `recordsFor`、`buildRoster`、`partnerActivitiesInRange`，它们改走 `lib/db/partner`。
+ * 正因为这个"看起来纯"的模块会连带 DB 连接，文件顶部挂 `server-only`：
+ * 一旦被客户端组件 import，构建就会失败，而不是把连接串带进浏览器。
  */
 
 /* ───────────────────────────── window parsing ───────────────────────────── */
@@ -184,20 +186,19 @@ export function summarizeRecords(records: PartnerDailyRecord[]): PartnerTotals {
   };
 }
 
-function recordsFor(
+/** 某个合作方在窗口内的日流水 —— 直接来自数据库。 */
+async function recordsFor(
   partnerId: string,
   range: ResolvedRange,
-): PartnerDailyRecord[] {
-  return partnerLedger.filter(
-    (record) => record.partnerId === partnerId && inRange(record, range),
-  );
+): Promise<PartnerDailyRecord[]> {
+  return listDailyRecords({ partnerId, from: range.from, to: range.to });
 }
 
-export function summarizePartner(
+export async function summarizePartner(
   partnerId: string,
   range: ResolvedRange,
-): PartnerSummary {
-  const records = recordsFor(partnerId, range);
+): Promise<PartnerSummary> {
+  const records = await recordsFor(partnerId, range);
   return {
     partnerId,
     from: range.from,
@@ -215,14 +216,31 @@ export interface RosterRow {
 }
 
 /** Every partner for the window, biggest earner first. */
-export function buildRoster(range: ResolvedRange): RosterRow[] {
-  return partnerProfiles
+export async function buildRoster(range: ResolvedRange): Promise<RosterRow[]> {
+  // 一次取回窗口内所有合作方的日流水，再在内存里分组：逐个合作方去查
+  // 就是把一张表渲染成 N+1 次往返。
+  const [partners, records] = await Promise.all([
+    listPartners(),
+    listDailyRecords({ from: range.from, to: range.to }),
+  ]);
+
+  const byPartner = new Map<string, PartnerDailyRecord[]>();
+  for (const record of records) {
+    const bucket = byPartner.get(record.partnerId);
+    if (bucket) {
+      bucket.push(record);
+    } else {
+      byPartner.set(record.partnerId, [record]);
+    }
+  }
+
+  return partners
     .map((partner) => {
-      const records = recordsFor(partner.id, range);
+      const rows = byPartner.get(partner.id) ?? [];
       return {
         partner,
-        totals: summarizeRecords(records),
-        days: records.length,
+        totals: summarizeRecords(rows),
+        days: rows.length,
       };
     })
     .sort((a, b) => b.totals.commission - a.totals.commission);
@@ -303,28 +321,26 @@ export function buildTrend(
 }
 
 /** Trend for one partner over a window. */
-export function partnerTrend(
+export async function partnerTrend(
   partnerId: string,
   range: ResolvedRange,
-): TrendPoint[] {
-  return buildTrend(recordsFor(partnerId, range), range);
+): Promise<TrendPoint[]> {
+  return buildTrend(await recordsFor(partnerId, range), range);
 }
 
 /* ──────────────────────────────── activities ─────────────────────────────── */
 
-/** Activities that *overlap* the window — a campaign spanning the boundary counts. */
-export function partnerActivitiesInRange(
+/**
+ * 与该合作方在窗口内有交集的活动 —— 跨窗口边界的活动也算命中。
+ *
+ * 重叠判定下沉到 `listActivities`（SQL `start_at <= to and end_at >= from`），
+ * 这里只负责保持返回形状，结果是按开始时间倒序的。
+ */
+export async function partnerActivitiesInRange(
   partnerId: string,
   range: ResolvedRange,
-): PartnerActivity[] {
-  return partnerActivities
-    .filter(
-      (activity) =>
-        activity.partnerId === partnerId &&
-        activity.startAt <= range.to &&
-        activity.endAt >= range.from,
-    )
-    .sort((a, b) => (a.startAt < b.startAt ? 1 : -1));
+): Promise<PartnerActivity[]> {
+  return listActivities({ partnerId, from: range.from, to: range.to });
 }
 
 /* ──────────────────────────────── derived ratios ─────────────────────────── */

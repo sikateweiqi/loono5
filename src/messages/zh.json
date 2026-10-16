@@ -31,7 +31,11 @@
     "featuresTranslate": "实时翻译",
     "featuresTranslateDesc": "聊天双语对照，支持中俄英三语",
     "verifiedBadge": "100% 真人实名认证",
-    "heroTitles": ["遇见对的人", "每张照片都是真人", "用母语轻松畅聊"],
+    "heroTitles": [
+      "遇见对的人",
+      "每张照片都是真人",
+      "用母语轻松畅聊"
+    ],
     "ctaPrimary": "开始 / 登录",
     "ctaSecondary": "浏览资料库",
     "partnerCta": "申请成为合作伙伴",
@@ -140,10 +144,26 @@
       "byInvitation": "仅限受邀加入",
       "visibility": "可查看 L{from} – L{to} 会员",
       "planFeatures": [
-        ["无限浏览与聊天", "实时翻译聊天", "基础择偶条件"],
-        ["含基础版全部权益", "高等级会员资料解锁", "高级择偶条件全部开放"],
-        ["含进阶版全部权益", "优先推荐与资料置顶", "专属客服通道"],
-        ["含尊享版全部权益", "人工牵线服务", "专属顾问一对一对接"]
+        [
+          "无限浏览与聊天",
+          "实时翻译聊天",
+          "基础择偶条件"
+        ],
+        [
+          "含基础版全部权益",
+          "高等级会员资料解锁",
+          "高级择偶条件全部开放"
+        ],
+        [
+          "含进阶版全部权益",
+          "优先推荐与资料置顶",
+          "专属客服通道"
+        ],
+        [
+          "含尊享版全部权益",
+          "人工牵线服务",
+          "专属顾问一对一对接"
+        ]
       ],
       "note": "价格按国家与币种自动换算，此处为演示数据。"
     },
@@ -186,10 +206,30 @@
         "legal": "法律与隐私",
         "support": "帮助与支持"
       },
-      "product": ["发现会员", "会员等级", "认证体系", "合伙申请"],
-      "about": ["关于我们", "团队介绍", "加入我们", "媒体报道"],
-      "legal": ["用户协议", "隐私政策", "注销政策", "未成年人保护"],
-      "support": ["帮助中心", "常见问题", "联系我们", "意见反馈"],
+      "product": [
+        "发现会员",
+        "会员等级",
+        "认证体系",
+        "合伙申请"
+      ],
+      "about": [
+        "关于我们",
+        "团队介绍",
+        "加入我们",
+        "媒体报道"
+      ],
+      "legal": [
+        "用户协议",
+        "隐私政策",
+        "注销政策",
+        "未成年人保护"
+      ],
+      "support": [
+        "帮助中心",
+        "常见问题",
+        "联系我们",
+        "意见反馈"
+      ],
       "disclaimer": "本页面为产品演示，所有会员资料、价格与统计数据均为示例数据，不代表真实用户。",
       "rights": "© 2026 LOONO. 保留所有权利。",
       "company": "LOONO 国际交友 · 演示站点",
@@ -197,25 +237,79 @@
     }
   },
   "auth": {
-    "title": "欢迎回来",
-    "subtitle": "登录以继续浏览和聊天",
-    "phonePlaceholder": "手机号",
-    "smsPlaceholder": "验证码",
-    "sendCode": "获取验证码",
-    "submit": "登录",
-    "mock": {
-      "hintTitle": "本地测试模式",
-      "hintBody": "任意手机号均可登录，固定测试短信验证码：1234",
-      "autofill": "自动填入",
-      "signingIn": "登录中…"
+    "register": {
+      "title": "创建账号",
+      "subtitle": "手机号或邮箱二选一，验证后设置登录密码",
+      "submit": "注册并继续",
+      "submitting": "注册中…"
     },
-    "agree": "我已阅读并同意《用户协议》与《隐私政策》",
-    "divider": "或使用以下方式登录",
-    "hasAccount": "已有账号？",
-    "hasAccountAction": "去登录",
+    "signin": {
+      "title": "欢迎回来",
+      "subtitle": "手机号或邮箱二选一，验证后设置登录密码",
+      "submit": "登录",
+      "submitting": "登录中…"
+    },
+    "channelLabel": "验证方式",
+    "channel": {
+      "sms": "手机号",
+      "email": "邮箱"
+    },
+    "identifierLabel": {
+      "sms": "手机号",
+      "email": "邮箱地址"
+    },
+    "codeLabel": "验证码",
+    "codePlaceholder": "6 位数字",
+    "sendCode": "获取验证码",
+    "resendIn": "{seconds} 秒后重发",
+    "sentTo": "验证码已发送至 {target}",
+    "terms": "我已阅读并同意《用户协议》与《隐私政策》",
+    "divider": "或使用以下方式继续",
+    "hasAccount": "已有账号？去登录",
+    "noAccount": "还没有账号？免费注册",
+    "dev": {
+      "hintTitle": "本地测试模式",
+      "hintBody": "本机未接短信与邮件通道，验证码直接显示：{code}",
+      "autofill": "自动填入"
+    },
     "errors": {
-      "phoneRequired": "请输入有效的手机号",
-      "invalidCode": "验证码错误，请输入 1234"
+      "invalidIdentifier": "请输入有效的手机号或邮箱",
+      "identifierTaken": "该手机号或邮箱已注册，请直接登录",
+      "notRegistered": "该账号尚未注册，请先注册",
+      "termsRequired": "请先阅读并同意用户协议与隐私政策",
+      "invalidCode": "验证码错误或已过期，请重新获取",
+      "cooldown": "请求过于频繁，请稍后再试",
+      "unknown": "操作失败，请稍后再试",
+      "passwordRequired": "请输入密码",
+      "passwordTooShort": "密码至少 8 位",
+      "passwordTooLong": "密码不能超过 128 位",
+      "passwordTooSimple": "密码需同时包含字母和数字",
+      "passwordSameAsIdentifier": "密码不能是手机号或邮箱本身",
+      "passwordMismatch": "两次输入的密码不一致",
+      "passwordWrong": "密码错误，请重试",
+      "passwordNotSet": "该账号还没有设置密码，请改用验证码登录"
+    },
+    "method": {
+      "label": "登录方式",
+      "code": "验证码登录",
+      "password": "密码登录"
+    },
+    "password": {
+      "label": "密码",
+      "labelNew": "设置登录密码",
+      "confirmLabel": "确认密码",
+      "placeholder": "至少 8 位，含字母和数字",
+      "confirmPlaceholder": "再输入一次",
+      "show": "显示密码",
+      "hide": "隐藏密码",
+      "hint": "至少 {min} 位，需同时包含字母和数字",
+      "strengthLabel": "强度：",
+      "strength": {
+        "0": "弱",
+        "1": "一般",
+        "2": "好",
+        "3": "很强"
+      }
     }
   },
   "onboarding": {
@@ -230,25 +324,55 @@
     "profile": {
       "title": "完善个人资料",
       "subtitle": "真实的信息更容易遇到对的人",
-      "nameLabel": "昵称",
+      "nameLabel": "真实姓名",
+      "nameHint": "需与证件一致，会公开展示",
       "genderLabel": "性别",
       "genderMale": "男",
       "genderFemale": "女",
-      "ageLabel": "年龄",
-      "cityLabel": "所在城市",
-      "bioLabel": "自我介绍",
-      "bioPlaceholder": "介绍一下你的兴趣与期待…",
-      "interestsLabel": "兴趣标签",
       "photosLabel": "照片",
-      "photosHint": "至少上传 1 张清晰正脸照",
+      "photosHint": "已上传 {count}/{max} 张，第一张会作为头像",
       "upload": "上传照片",
-      "submit": "保存并继续"
+      "submit": "保存并继续",
+      "birthDateLabel": "出生日期",
+      "primaryPhoto": "头像",
+      "removePhoto": "删除这张照片",
+      "uploading": "上传中",
+      "submitting": "保存中…",
+      "errors": {
+        "unauthorized": "登录状态已失效，请重新登录",
+        "empty": "请填写真实姓名",
+        "tooShort": "真实姓名至少 2 个字符",
+        "tooLong": "真实姓名不能超过 40 个字符",
+        "hasDigit": "真实姓名不能包含数字",
+        "hasSymbol": "真实姓名含有不允许的字符",
+        "noLetter": "真实姓名必须包含字母",
+        "tooManyWords": "真实姓名最多 4 个词",
+        "birthDateRequired": "请滑动选择出生日期",
+        "birthDateInvalid": "出生日期不是一个有效的日期",
+        "birthDateRange": "年龄需在 18 至 80 岁之间",
+        "countryRequired": "请选择居住国家",
+        "cityRequired": "请从列表中选择城市",
+        "photosRequired": "请至少上传 1 张照片",
+        "photoInvalid": "照片地址不合法，请重新上传",
+        "uploadFailed": "照片上传失败，请检查网络后重试",
+        "uploadTooLarge": "照片不能超过 5MB，请压缩后再试",
+        "uploadType": "只支持 JPG / PNG / WebP / AVIF 格式",
+        "uploadEmpty": "照片是空文件，请重新选择",
+        "unknown": "保存失败，请稍后再试"
+      }
     },
     "attributes": {
       "title": "完善个人属性",
       "subtitle": "这些属性用于匹配与互荐，填得越完整越容易遇到合适的人",
-      "continue": "保存并继续",
-      "hint": "身高、资产等敏感信息不会公开展示，仅用于匹配计算"
+      "submit": "保存并继续",
+      "submitting": "保存中…",
+      "hint": "身高、资产等敏感信息不会公开展示，仅用于匹配计算",
+      "errors": {
+        "unauthorized": "登录状态已失效，请重新登录",
+        "interestsTooMany": "兴趣标签最多选 12 个",
+        "bioTooLong": "自我介绍不能超过 500 字",
+        "unknown": "保存失败，请稍后再试"
+      }
     },
     "partner": {
       "title": "设置择偶条件",
@@ -419,13 +543,13 @@
     },
     "sections": {
       "basic": "基础资料",
+      "interests": "兴趣与自我介绍",
       "lifestyle": "生活方式与信仰",
       "assets": "资产与居住"
     },
     "height": {
       "label": "身高",
       "unit": "cm",
-      "placeholder": "如 175",
       "value": "{cm} cm"
     },
     "education": {
@@ -518,14 +642,37 @@
       "SG": "新加坡",
       "AU": "澳大利亚",
       "CA": "加拿大",
-      "AE": "阿联酋"
+      "AE": "阿联酋",
+      "placeholder": "请选择国家",
+      "KZ": "哈萨克斯坦",
+      "SE": "瑞典",
+      "MX": "墨西哥"
     },
     "city": {
       "label": "居住城市",
-      "placeholder": "如：上海"
+      "placeholder": "请选择城市",
+      "pickCountryFirst": "请先选择国家",
+      "hint": "城市列表随所选国家变化"
     },
     "residence": {
       "label": "居住地"
+    },
+    "weight": {
+      "label": "体重",
+      "unit": "kg",
+      "value": "{kg} kg"
+    },
+    "slider": {
+      "notSet": "未设置",
+      "clear": "清除"
+    },
+    "interests": {
+      "label": "兴趣标签",
+      "hint": "可多选"
+    },
+    "bio": {
+      "label": "自我介绍",
+      "placeholder": "介绍一下你的兴趣与期待…"
     }
   },
   "partnerPref": {
@@ -550,7 +697,8 @@
       "from": "最小",
       "to": "最大",
       "unitAge": "岁",
-      "unitHeight": "cm"
+      "unitHeight": "cm",
+      "any": "不限"
     },
     "age": {
       "label": "对方年龄范围"
@@ -1057,6 +1205,10 @@
         "body": "从下方总览里选一行，或用上方的筛选条指定代理商与时间段。"
       }
     },
+    "empty": {
+      "title": "尚未开通合作方账号",
+      "body": "当前登录的会员账号还不是合作方，暂时没有可展示的合作数据。"
+    },
     "revenue": "收益分析",
     "revenueHint": "近 6 个月佣金收入",
     "totalRevenue": "总收益",
@@ -1096,5 +1248,12 @@
       "other": "其他"
     },
     "someone": "该用户"
+  },
+  "datePicker": {
+    "year": "年",
+    "month": "月",
+    "day": "日",
+    "hint": "上下滑动选择出生日期",
+    "selected": "已选择 {value}"
   }
 }
