@@ -38,6 +38,33 @@ export interface SliderProps {
   className?: string;
 }
 
+/**
+ * 把 base-ui 回调给的负载统一成数组。
+ *
+ * 为什么需要它 —— 上游对"这是不是区间滑块"有两个互相打架的判定：
+ *
+ * - `SliderRoot` 用 `Array.isArray(value)`：传 `[175]` 就算区间（`range = true`）；
+ * - `SliderControl` / `SliderThumb` 用 `values.length > 1`：`[175]` 只有一个值，
+ *   算**单值**（`range = false`）。
+ *
+ * 两者在"只传一个元素的数组"上结论相反，于是同一个滑块的不同交互路径
+ * 吐出不同形状的负载（已实测，不是推断）：
+ *
+ * - 隐藏 `<input type="range">` 的 change（键盘/表单）走 Root 的 `range` → 给 `number[]`；
+ * - 指针拖动走 Control 的 `range` → 给**裸 `number`**。
+ *
+ * 于是 `[...next]` 在拖动时会抛 `TypeError: next is not iterable` ——
+ * 这正是身高/体重滑块的线上报错。对外我们坚持"只暴露数组"（见文件头注释），
+ * 所以差异必须在这一个边界处被抹平，而不是让每个调用方各自判断。
+ *
+ * 用 `typeof === "number"` 而不是 `Array.isArray`：对 `readonly number[]`
+ * 做 `Array.isArray` 窄化后类型会退化成 `any[]`，而这里两种形状是互斥的，
+ * 用 typeof 既能正确窄化、也把"只有这两种形状"写死在代码里。
+ */
+export function toSliderValueArray(next: number | readonly number[]): number[] {
+  return typeof next === "number" ? [next] : [...next];
+}
+
 export function Slider({
   value,
   onChange,
@@ -53,7 +80,7 @@ export function Slider({
     <SliderPrimitive.Root
       data-slot="slider"
       value={value}
-      onValueChange={(next) => onChange([...next])}
+      onValueChange={(next) => onChange(toSliderValueArray(next))}
       min={min}
       max={max}
       step={step}

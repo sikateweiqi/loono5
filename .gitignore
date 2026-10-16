@@ -23,9 +23,16 @@
 # production
 /build
 
+# 会员上传的照片（本地开发用；生产由 UPLOAD_DIR 指向数据卷）
+/var/
+
 # misc
 .DS_Store
 *.pem
+
+# editor
+.idea/
+.vscode/
 
 # debug
 npm-debug.log*
@@ -35,6 +42,8 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+# 但模板要进仓库，否则新环境不知道该填哪些变量
+!.env.example
 
 # vercel
 .vercel

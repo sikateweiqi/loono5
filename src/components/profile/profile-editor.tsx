@@ -315,7 +315,10 @@ function MetricSlider({
       <div className="flex items-center gap-3">
         <Slider
           value={[value ?? Math.round((min + max) / 2)]}
-          onChange={([next]) => onChange(next)}
+          // `?? null` 是兜底而不是防御性冗余：负载若意外短于一个元素
+          // （见 `toSliderValueArray` 的注释，上游形状并不总是数组），
+          // 解构出来就是 `undefined` —— 那会被当成一个"已填写"的脏值写进资料。
+          onChange={([next]) => onChange(next ?? null)}
           min={min}
           max={max}
           step={SLIDER_STEP}
@@ -388,8 +391,8 @@ function RangeMetricSlider({
         onChange={([nextLower, nextUpper]) => {
           // 拖动任一端都视为"用户开始设定这一项"，两端一并写实。
           // 否则会出现"下限生效、上限仍是不限"这种用户没有表达过的组合。
-          onMin(nextLower);
-          onMax(nextUpper);
+          onMin(nextLower ?? null);
+          onMax(nextUpper ?? null);
         }}
         min={min}
         max={max}
