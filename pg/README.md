@@ -42,6 +42,10 @@ docker exec postgres psql -U loono -d loono -c "SELECT id FROM persist_check;"
 New-NetFirewallRule -DisplayName "PostgreSQL 5432 (LAN)" `
   -Direction Inbound -Protocol TCP -LocalPort 5432 `
   -Action Allow -Profile Private -RemoteAddress LocalSubnet
+  
+New-NetFirewallRule -DisplayName "pgweb 8081 (LAN)" -Direction Inbound `
+  -Protocol TCP -LocalPort 8081 -Action Allow -Profile Private -RemoteAddress LocalSubnet
+
 ```
 
 查看 PC 的局域网 IP：
